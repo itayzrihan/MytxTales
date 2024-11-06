@@ -26,7 +26,7 @@ export class Game extends Scene {
     map: MapOne | MapTwo; // Map variable to hold either MapOne or MapTwo instance
 
     // Default spawn position
-    spawnPosition = { x: 100, y: 600 };
+    spawnPosition = { x: 100, y: 500 };
 
     constructor() {
         super('Game');

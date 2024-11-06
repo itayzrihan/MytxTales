@@ -26,7 +26,7 @@ export class PlatformFactory {
 
     createFloor() {
         // Create a floor platform across the entire map width
-        const floor = this.scene.add.rectangle(this.mapWidth / 2, 640, this.mapWidth, 20, 0xffffff);
+        const floor = this.scene.add.rectangle(this.mapWidth / 2, 640, this.mapWidth, 1, 0xffffff);
         this.scene.physics.add.existing(floor, true); // Add physics body (true = immovable)
 
         this.platforms.add(floor);

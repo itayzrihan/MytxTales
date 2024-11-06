@@ -4,9 +4,11 @@ import { Scene, Physics } from 'phaser';
 export class MonsterSpawner {
     scene: Scene;
     monsterGroup: Phaser.Physics.Arcade.Group;
+    groundLevel: number; // Define ground level for monsters
 
     constructor(scene: Scene) {
         this.scene = scene;
+        this.groundLevel = 600; // Set ground level for monsters (same as player)
 
         // Initialize the monster group as a physics group
         this.monsterGroup = this.scene.physics.add.group({
@@ -76,7 +78,7 @@ export class MonsterSpawner {
             monsterBody.setGravityY(300); // Apply gravity to monsters
 
             monster.setData('isMonster', true)
-            .setData('hitsTaken', 0) // Track hits
+            .setData('hitsTaken', 0)
 
                    .setInteractive();
 
@@ -95,31 +97,37 @@ export class MonsterSpawner {
 
     if (hitsTaken < 3) {
         monster.play('monster_hit');
-
+    
         if (Phaser.Math.Between(0, 1) === 0) {
             const pushbackDirection = monster.flipX ? 1 : -1;
             const pushbackForce = 200 * pushbackDirection;
             const monsterBody = monster.body as Physics.Arcade.Body;
             monsterBody.setVelocityX(pushbackForce);
         }
-
+    
         monster.once('animationcomplete', () => {
             monster.play('monster_move');
             monster.setData('isHit', false); // Reset isHit after hit animation
         });
     } else {
         monster.play('monster_die');
+        monster.setData('isDead', true); // Set the monster as dead
         monster.once('animationcomplete', () => {
             this.monsterGroup.remove(monster, true, true);
         });
     }
+    
 }
 
 updateMonsters() {
     this.monsterGroup.getChildren().forEach(monster => {
         const direction = monster.getData('walkDirection');
         const monsterBody = monster.body as Physics.Arcade.Body;
-
+         // Ensure monsters don’t fall below ground level
+         if (monster.y > this.groundLevel) {
+            monster.y = this.groundLevel;
+            monsterBody.setVelocityY(0);
+        }
         // Skip setting velocity if the monster is in hit state
         if (!monster.getData('isHit')) { 
             if (monster.getData('isWalking')) {
@@ -159,28 +167,29 @@ startMonsterMovement(monster: Phaser.GameObjects.GameObject) {
 
     const stopWalking = () => {
         monster.setData('isWalking', false);
-
-        // Check if monster is a Phaser.Sprite before playing animation
-        if (monster instanceof Phaser.GameObjects.Sprite) {
-            monster.play('monster_idle');
-        } else {
-            console.warn("Monster is not a Phaser.GameObjects.Sprite:", monster);
+    
+        // Check if the monster has died; if so, don't play any animation
+        if (!monster.getData('isDead')) { // Check if the monster is dead before playing animations
+            if (monster instanceof Phaser.GameObjects.Sprite) {
+                monster.play('monster_idle');
+            } else {
+                console.warn("Monster is not a Phaser.GameObjects.Sprite:", monster);
+            }
         }
-
+    
         // Schedule the monster to start walking again after a random interval (1-5 seconds)
         this.scene.time.addEvent({
             delay: Phaser.Math.Between(1000, 5000),
             callback: () => {
-                startWalking();
+                if (!monster.getData('isDead')) { // Check if monster is dead before starting to walk again
+                    startWalking();
+                }
             },
             loop: false
         });
     };
 
-    // Start the movement cycle
-    startWalking();
 }
-
 
 
 
